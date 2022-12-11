@@ -1,0 +1,109 @@
+version: "2.12.2"
+services:
+        nginx:
+                container_name: nginx
+                build:          ./requirements/nginx/.
+                hostname:       nginx
+                image:          nginx:nginx
+                networks:
+                        -       wp-net
+                ports:
+                        -       "443:443"
+                volumes:
+                        -        wp_vol:/usr/share/nginx/html
+                depends_on:
+                        -       wordpress
+                        -       site
+                        -       adminer
+                restart:        always
+        mariadb:
+                container_name: mariadb
+                hostname:       mariadb
+                build:          ./requirements/mariadb/.
+                image:          mariadb:mariadb
+                env_file:
+                        -       ./.env
+                networks:
+                        -       wp-net
+                depends_on:
+                        -       site
+                ports:
+                        -       "3306:3306"
+                volumes:
+                        -       db_vol:/var/lib/mysql/
+                restart:        always
+        wordpress:
+                container_name: wordpress
+                hostname:       wordpress
+                build:          ./requirements/wordpress/.
+                image:          wordpress:wordpress
+                env_file:
+                        -       ./.env
+                networks:
+                        -       wp-net
+                depends_on:
+                        -       mariadb
+                        -       redis
+                ports:
+                        -       "9000:9000"
+                volumes:
+                        -       wp_vol:/usr/share/nginx/html
+                restart:        always
+        redis:
+                container_name: redis
+                hostname:       redis
+                build:          ./requirements/bonus/requirements/redis/.
+                image:          redis:redis
+                env_file:
+                        -       ./.env
+                networks:
+                        -       wp-net
+                volumes:
+                        -       rds_vol:/var/lib/redis
+                ports:
+                        -       6379:6379
+                restart:        always
+        adminer:
+                container_name:  adminer
+                hostname:        adminer
+                build:           ./requirements/bonus/requirements/adminer/.
+                image:           adminer:adminer
+                depends_on:
+                        -       mariadb
+                ports:
+                        -       "8083:8083"
+                networks:
+                        -       wp-net
+                restart:        always
+        site:
+                container_name: site
+                hostname:       site
+                build:          ./requirements/bonus/requirements/site/.
+                image:          site:site
+                networks:
+                        -       wp-net
+                volumes:
+                        -        wp_vol:/usr/share/nginx/html
+                restart:        always
+volumes:
+        wp_vol:
+                driver: local
+                driver_opts:
+                        type: none
+                        device: /home/tel-bouh/data/wp
+                        o: bind
+        db_vol:
+               driver: local
+               driver_opts:
+                        type: none
+                        device: /home/tel-bouh/data/db
+                        o: bind
+        rds_vol:
+               driver: local
+               driver_opts:
+                        type: none
+                        device: /home/tel-bouh/data/rds
+                        o: bind
+networks:
+        wp-net:
+                name: wp-net
