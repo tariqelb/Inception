@@ -1,10 +1,9 @@
-version: "2.12.2"
+version: "3.8"
 services:
         nginx:
                 container_name: nginx
                 build:          ./requirements/nginx/.
                 hostname:       nginx
-                image:          nginx:nginx
                 networks:
                         -       wp-net
                 ports:
@@ -20,7 +19,6 @@ services:
                 container_name: mariadb
                 hostname:       mariadb
                 build:          ./requirements/mariadb/.
-                image:          mariadb:mariadb
                 env_file:
                         -       ./.env
                 networks:
@@ -36,7 +34,6 @@ services:
                 container_name: wordpress
                 hostname:       wordpress
                 build:          ./requirements/wordpress/.
-                image:          wordpress:wordpress
                 env_file:
                         -       ./.env
                 networks:
@@ -53,7 +50,6 @@ services:
                 container_name: redis
                 hostname:       redis
                 build:          ./requirements/bonus/requirements/redis/.
-                image:          redis:redis
                 env_file:
                         -       ./.env
                 networks:
@@ -67,7 +63,6 @@ services:
                 container_name:  adminer
                 hostname:        adminer
                 build:           ./requirements/bonus/requirements/adminer/.
-                image:           adminer:adminer
                 depends_on:
                         -       mariadb
                 ports:
@@ -79,7 +74,6 @@ services:
                 container_name: site
                 hostname:       site
                 build:          ./requirements/bonus/requirements/site/.
-                image:          site:site
                 networks:
                         -       wp-net
                 volumes:
