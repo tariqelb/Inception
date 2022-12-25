@@ -1,9 +1,9 @@
 #!/bin/sh
 
-ROOT_PASSWORD="wpRoot1234"
-USER_PASSWORD="wpUser1234"
-DATABASE="wpDatabase"
-USER="wpUser"
+#ROOT_PASSWORD="wpRoot1234"
+#USER_PASSWORD="wpUser1234"
+#DATABASE="wpDatabase"
+#USER="wpUser"
 HOST="%"
 
 
@@ -19,25 +19,30 @@ echo "----------------lanch mariadb--------------------"
 openrc default
 /etc/init.d/mariadb setup
 rc-service mariadb start
-echo "---------------------------------------"
+
+RESULT=`/usr/bin/mariadb -u root --password=${ROOT_PASSWORD} --skip-column-names -e "SHOW DATABASES LIKE '${DATABASE}'"`
+
+if [ $RESULT == $DATABASE ]; then
+	echo database exist
+else
+	echo "-----------------set root password----------------------"
+	echo "${commands1}" | /usr/bin/mariadb -u root --password=${ROOT_PASSWORD}
+	echo "---------------------------------------"
 
 
-echo "-----------------set root password----------------------"
-echo "${commands1}" | /usr/bin/mariadb -u root --password=${ROOT_PASSWORD}
-echo "---------------------------------------"
 
+	echo "---------------remove anynomous user------------------------"
+	echo  "DROP USER ' '@'buildkitsandbox'" | /usr/bin/mariadb -u root  --password=${ROOT_PASSWORD}
+	echo "FLUSH PRIVILEGES" | /usr/bin/mariadb -u root  --password=${ROOT_PASSWORD}
+	echo "---- done ---------------------------------"
 
-echo "---------------remove anynomous user------------------------"
-echo  "DROP USER ' '@'buildkitsandbox'" | /usr/bin/mariadb -u root  --password=${ROOT_PASSWORD}
-echo "FLUSH PRIVILEGES" | /usr/bin/mariadb -u root  --password=${ROOT_PASSWORD}
-echo "----dooone-----------------------------------"
+	echo "${commands2}" | /usr/bin/mariadb -u root --password=${ROOT_PASSWORD}
+	echo "${commands3}" | /usr/bin/mariadb -u root  --password=${ROOT_PASSWORD}
 
-echo "${commands2}" | /usr/bin/mariadb -u root --password=${ROOT_PASSWORD}
-echo "${commands3}" | /usr/bin/mariadb -u root  --password=${ROOT_PASSWORD}
+	echo "---------------------------------------"
 
-echo "---------------------------------------"
+	/usr/bin/mariadb -u root --password="${ROOT_PASSWORD}" ${DATABASE} < /wplogindb.sql
 
-/usr/bin/mariadb -u root --password="${ROOT_PASSWORD}" ${DATABASE} < /wplogindb.sql
-
+fi
 rc-service mariadb stop
 mariadbd -u root

@@ -8,7 +8,7 @@ echo "define(""'DB_CHAERSET'"", ""'utf8'"");" >> /wp-config.php
 echo "define(""'DB_COLLATE'"", ""'utf8_unicode_ci'"");" >> /wp-config.php
 
 echo '$table_prefix'" = 'wp_';" >> /wp-config.php
-
+echo 'define(""'WP-DEBUG'"", ""'true'"");'
 
 echo "define(""'WP_REDIS_HOST'"", ""'$REDIS_HOST'"");" >> /wp-config.php
 echo "define(""'WP_REDIS_PORT'"", ""'$REDIS_PORT'"");" >> /wp-config.php
@@ -24,6 +24,8 @@ echo "}" >> /wp-config.php
 echo "require_once ABSPATH . 'wp-settings.php';" >> /wp-config.php
 
 cp -rf /wp-config.php /usr/share/nginx/html/.
+rm -rf /wordpress/wp-config.php
+cp -rf /wordpress/* /usr/share/nginx/html/.
 chown -R nginx:nginx /usr/share/nginx
 chown -R nginx:nginx /usr/share/nginx/html
 chmod -R 744 /usr/share/nginx

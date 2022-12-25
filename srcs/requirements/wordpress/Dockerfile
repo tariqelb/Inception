@@ -22,7 +22,7 @@ RUN /bin/mkdir -p /usr/share/nginx/html
 
 RUN /bin/rm -rf /wordpress/wp-config.php
 
-RUN /bin/cp -rf /wordpress/. /usr/share/nginx/html/.
+#RUN /bin/cp -rf /wordpress/. /usr/share/nginx/html/.
 
 RUN addgroup -S nginx && adduser -S nginx -G nginx
 
