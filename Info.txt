@@ -1,0 +1,507 @@
+What is a daemon?
+In computing, a daemon (pronounced DEE-muhn) is a program that runs continuously as a background process and wakes up to handle periodic service requests, which often come from remote processes. The daemon program is alerted to the request by the operating system (OS), and it either responds to the request itself or forwards the request to another program or process as appropriate.
+Common daemon processes include print spoolers, email handlers and other programs that manage administrative tasks. Many Unix or Linux utility programs run as daemons. For example, on Linux, the Network Time Protocol (NTP) daemon is used to measure time differences between the clock on the computer it runs on and those of all other computers on the network. A time daemon runs on each of the host computers, with one being designated as primary and all others as secondary. Secondary daemons reset the network time on their host computer by first sending a request to the primary time daemon to find out the correct network time.
+A daemon plays the role of a server in a client-server model.
+What role do daemons play in web services?
+One of the most obvious examples of a daemon is the Hypertext Transfer Protocol daemon (HTTPd), which runs on every web server, continually waiting in dormant mode until requests come in from web clients and their users. Earlier versions of HTTP daemons would spawn a new process to handle each request. The new process, a replica of the daemon, would fetch the requested content and return it to the requesting client. Then, the new process would die.  By spawning a new process, the original process could go back to dormant mode to wait for other requests. This approach was used to prevent the original process from getting too busy to service new requests, as a daemon that handles all requests by itself would make a system more vulnerable to hackers. Denial-of-service attacks are often based on the strategy of keeping a daemon too busy to handle incoming requests.
+More modern HTTP daemons, such as Apache, handle requests using threads instead of spawning new processes. Threads, which came into common use well after the first generation of HTTP daemons were implemented and deployed, enable different parts of the same process to run in parallel. The main part of a daemon can wait for new requests, while other threads handle older requests. Threads require less overhead than spawning a new process, which takes time to accomplish, and the new process needs memory to run.
+A third approach is exemplified by the Nginx HTTP daemon, which is based on an event-driven architecture operating in a single thread. Requests are handed off to worker processes, which constantly run in the background -- that is, they aren't spawned just to handle a request only to die off immediately afterward. The administrator determines how many worker processes to create.
+What kind of operating systems do daemons require?
+Since daemons require special services from the OS, they behave slightly differently from one operating system to another. The first daemons were run on the Unix OS and were designed around the features of Unix.
+Daemons are started on the Unix command line or in a startup file; these files contain script that is executed when the system is booted or on some other event, such as user login or when a new shell script is spawned. They then run in the background and wait for a signal from the OS to wake up and go into action.
+Daemons can only run on multitasking OSes. They were implemented in Microsoft Windows, starting with the NT version, and are often referred to as Windows services instead of daemons.
+What are examples of daemons?
+Daemons respond to alerts from the OS upon some external event, such as the arrival of a message on the network. For messages coming from the network, the TCP/IP module on the host computer looks up the port number of the message and sends an alert to the daemon assigned to that port number. For example, port number 80 is assigned to HTTP, so when a message with that port number is received, the TCP/IP stack built into the OS sends a signal to the HTTPd.
+Any system based on Unix or on a variant of Unix runs several daemons, the names of which typically end with the letter d. The following are some examples of daemons:
+	•	init. This is the first daemon to start up when Unix boots, and it spawns all other processes.
+	•	inetd. This super-daemon listens for internet requests on a designated port number and spawns the appropriate server program to handle them. Services handled by inetd include rlogin, telnet, ftp, talk and finger.
+	•	crond. This daemon executes scheduled commands.
+	•	dhcpd. This daemon provides Dynamic Host Configuration Protocol services.
+	•	fingerd. This daemon is often started by inetd to respond to the finger command.
+	•	ftpd. This daemon is often started by inetd to handle File Transfer Protocol requests.
+	•	httpd. This daemon acts as a web server.
+
+ The key differentiator between containers and virtual machines is that virtual machines virtualize an entire machine down to the hardware layers and containers only virtualize software layers above the operating system level.
+ Introduction
+Docker image is a stack of read-only layers wherein each layer a Docker command is recorded. When we start a Docker container from Docker images, the Docker engine takes the read-only stack of layers and adds a read-write stack on top of it. The changes which we make within a running container will be stored on this read-write layer. This file system of Docker is known as the Union File System. Docker also ensures that the changes on read-write will not affect the original files in the read-only layer. 
+The Requirement of Docker Volumes
+Since the files created or modified inside a container will be stored on a writable container layer, the data doesn’t persist when the container no longer exists. Also, it isn’t easy to get the data out of a container if another process needs it. The Union File system is provided by a storage driver using Linux kernels. When we use the writable container layer, we have an extra abstraction with a storage driver, which reduces the performance.
+Different Types of Storage Options
+Docker has multiple options for containers to store files in the host machine.
+	1.	Volumes
+	2.	Bind mounts
+	3.	Tmpfs (If you are running Docker on Linux, you can also use tmpfs mount.
+
+Volumes
+Volumes are also stored as part of the host file system, which is managed by Docker. On Linux, volumes are stored in “/var/lib/docker/volume”. Non-Docker processes should not be allowed to modify this part of the file system. One of the best ways to persist data in Docker is Volumes
+Bind Mounts
+“Bind mounts” can be stored anywhere on the host system, which may even contain important system files or directories. In this case, Non-Docker processes on the Docker host or a Docker container can modify them at any time. If you bind-mount into a non-empty directory on the container, the directory’s existing contents are obscured by the bind mount.
+ Difference between Bind Mount and Volume Mount
+Bind mounts are basically just binding a certain directory or file from the host inside the container. The file or directory is referenced by its absolute path on the host machine.
+When you use a volume, a new directory is created within Docker’s storage directory on the host machine, and Docker manages that directory’s contents.
+If you use binds and want to transfer your containers/applications to another host, you have to rebuild your directory-structure, whereas volumes are more uniform on every host.
+tmpfs mounts
+tmpfs mounts are temporary. They are stored in the host system’s memory only and are never written to the host system’s file system. If your container generates non-persistent state data, consider using a tmpfs mount to avoid storing the data anywhere permanently and increase the container’s performance by avoiding writing into the container’s writable layer. This option can be used for keeping sensitive data during execution.
+Comparison of Volumes, BindMounts & Tempfs
+
+Volumes
+Bind mounts
+Tmpfs mounts
+Storage
+In a host file system, which is managed by Docker.
+
+(var/lib/docker/volumes in linux)
+Anywhere in the host system.
+In system memory (RAM).  The container creates files outside its writable layer.
+Access Control
+By docker only
+Docker and other processes.
+Data is not written to the host filesystem.
+Persistence
+Persistent
+Persistent
+Non-persistent
+Security
+More secure as volumes are managed by docker itself and other processes can’t modify the concerned file system
+Not secure enough as the host file system can be modified by other processes
+We can  use this mount option for keeping sensitive data during execution, which should not persist
+Support for volume drivers
+Supports volume drivers.
+
+You can store data in remote hosts or cloud providers
+Doesn’t support volume drivers
+Doesn’t support volume drivers
+Volume sharing
+Multiple containers can mount the same volume simultaneously.
+Sharing data across multiple containers is not possible.
+Data can’t be shared between containers.
+Use Cases
+	•	Easy to store your data on remote hosts or cloud providers using volumes.
+	•	If Docker host is not having a definite file structure, volumes are preferred.
+	•	To  share configuration files from host to container.
+	•	Sharing source code or building artifacts between development environments in docker host and container.
+	•	When file or directory structure is guaranteed to be consistent, you can go for bind mounts if necessary.
+	•	To protect the performance of containers when your application needs to write a large volume of nonpersistent data.
+	•	Tmpfs can be used in Linux machines only.
+	•	To mount secrets to containers or to store sensitive info that no one should access.
+
+
+Bind mounts
+
+Bind mounts have been around since the early days of Docker. Bind mounts have limited functionality compared to volumes. When you use a bind mount, a file or directory on the host machine is mounted into a container. The file or directory is referenced by its absolute path on the host machine. By contrast, when you use a volume, a new directory is created within Docker’s storage directory on the host machine, and Docker manages that directory’s contents.
+Volumes
+
+Volumes are the preferred mechanism for persisting data generated by and used by Docker containers. While bind mounts are dependent on the directory structure and OS of the host machine, volumes are completely managed by Docker. Volumes have several advantages over bind mounts:
+	•	Volumes are easier to back up or migrate than bind mounts.
+	•	You can manage volumes using Docker CLI commands or the Docker API.
+	•	Volumes work on both Linux and Windows containers.
+	•	Volumes can be more safely shared among multiple containers.
+	•	Volume drivers let you store volumes on remote hosts or cloud providers, to encrypt the contents of volumes, or to add other functionality.
+	•	New volumes can have their content pre-populated by a container.
+	•	Volumes on Docker Desktop have much higher performance than bind mounts from Mac and Windows hosts.
+In addition, volumes are often a better choice than persisting data in a container’s writable layer, because a volume does not increase the size of the containers using it, and the volume’s contents exist outside the lifecycle of a given container.
+volumes🔗
+Mount host paths or named volumes, specified as sub-options to a service.
+You can mount a host path as part of a definition for a single service, and there is no need to define it in the top level volumes key.
+But, if you want to reuse a volume across multiple services, then define a named volume in the top-level volumes key. Use named volumes with
+driver
+Specify which volume driver should be used for this volume. Defaults to whatever driver the Docker Engine has been configured to use, which in most cases is local. If the driver is not available, the Engine returns an error when docker-compose up tries to create the volume.
+
+driver: foobar
+driver_opts
+Specify a list of options as key-value pairs to pass to the driver for this volume. Those options are driver-dependent - consult the driver’s documentation for more information. Optional.
+
+volumes:
+  example:
+    driver_opts:
+      type: "nfs"
+      o: "addr=10.40.0.199,nolock,soft,rw"
+      device: ":/docker/example"
+
+
+
+
+Docker overview
+Docker is an open platform for developing, shipping, and running applications. Docker enables you to separate your applications from your infrastructure so you can deliver software quickly. With Docker, you can manage your infrastructure in the same ways you manage your applications. By taking advantage of Docker’s methodologies for shipping, testing, and deploying code quickly, you can significantly reduce the delay between writing code and running it in production.
+The Docker platform
+Docker provides the ability to package and run an application in a loosely isolated environment called a container. The isolation and security allows you to run many containers simultaneously on a given host. Containers are lightweight and contain everything needed to run the application, so you do not need to rely on what is currently installed on the host. You can easily share containers while you work, and be sure that everyone you share with gets the same container that works in the same way.
+Docker provides tooling and a platform to manage the lifecycle of your containers:
+	•	Develop your application and its supporting components using containers.
+	•	The container becomes the unit for distributing and testing your application.
+	•	When you’re ready, deploy your application into your production environment, as a container or an orchestrated service. This works the same whether your production environment is a local data center, a cloud provider, or a hybrid of the two.
+What can I use Docker for?
+Fast, consistent delivery of your applications
+Docker streamlines the development lifecycle by allowing developers to work in standardized environments using local containers which provide your applications and services. Containers are great for continuous integration and continuous delivery (CI/CD) workflows.
+Consider the following example scenario:
+	•	Your developers write code locally and share their work with their colleagues using Docker containers.
+	•	They use Docker to push their applications into a test environment and execute automated and manual tests.
+	•	When developers find bugs, they can fix them in the development environment and redeploy them to the test environment for testing and validation.
+	•	When testing is complete, getting the fix to the customer is as simple as pushing the updated image to the production environment.
+Responsive deployment and scaling
+Docker’s container-based platform allows for highly portable workloads. Docker containers can run on a developer’s local laptop, on physical or virtual machines in a data center, on cloud providers, or in a mixture of environments.
+Docker’s portability and lightweight nature also make it easy to dynamically manage workloads, scaling up or tearing down applications and services as business needs dictate, in near real time.
+Running more workloads on the same hardware
+Docker is lightweight and fast. It provides a viable, cost-effective alternative to hypervisor-based virtual machines, so you can use more of your server capacity to achieve your business goals. Docker is perfect for high density environments and for small and medium deployments where you need to do more with fewer resources.
+Docker architecture
+Docker uses a client-server architecture. The Docker client talks to the Docker daemon, which does the heavy lifting of building, running, and distributing your Docker containers. The Docker client and daemon can run on the same system, or you can connect a Docker client to a remote Docker daemon. The Docker client and daemon communicate using a REST API, over UNIX sockets or a network interface. Another Docker client is Docker Compose, that lets you work with applications consisting of a set of containers.
+
+The Docker daemon
+The Docker daemon (dockerd) listens for Docker API requests and manages Docker objects such as images, containers, networks, and volumes. A daemon can also communicate with other daemons to manage Docker services.
+The Docker client
+The Docker client (docker) is the primary way that many Docker users interact with Docker. When you use commands such as docker run, the client sends these commands to dockerd, which carries them out. The docker command uses the Docker API. The Docker client can communicate with more than one daemon.
+Docker Desktop
+Docker Desktop is an easy-to-install application for your Mac, Windows or Linux environment that enables you to build and share containerized applications and microservices. Docker Desktop includes the Docker daemon (dockerd), the Docker client (docker), Docker Compose, Docker Content Trust, Kubernetes, and Credential Helper. For more information, see Docker Desktop.
+Docker registries
+A Docker registry stores Docker images. Docker Hub is a public registry that anyone can use, and Docker is configured to look for images on Docker Hub by default. You can even run your own private registry.
+When you use the docker pull or docker run commands, the required images are pulled from your configured registry. When you use the docker push command, your image is pushed to your configured registry.
+Docker objects
+When you use Docker, you are creating and using images, containers, networks, volumes, plugins, and other objects. This section is a brief overview of some of those objects.
+Images
+https://www.howtogeek.com/devops/what-are-docker-image-layers/#:~:text=Layers%20are%20a%20result%20of,don't%20affect%20the%20filesystem.
+An image is a read-only template with instructions for creating a Docker container. Often, an image is based on another image, with some additional customization. For example, you may build an image which is based on the ubuntu image, but installs the Apache web server and your application, as well as the configuration details needed to make your application run.
+You might create your own images or you might only use those created by others and published in a registry. To build your own image, you create a Dockerfile with a simple syntax for defining the steps needed to create the image and run it. Each instruction in a Dockerfile creates a layer in the image. When you change the Dockerfile and rebuild the image, only those layers which have changed are rebuilt. This is part of what makes images so lightweight, small, and fast, when compared to other virtualization technologies.
+Containers
+A container is a runnable instance of an image. You can create, start, stop, move, or delete a container using the Docker API or CLI. You can connect a container to one or more networks, attach storage to it, or even create a new image based on its current state.
+By default, a container is relatively well isolated from other containers and its host machine. You can control how isolated a container’s network, storage, or other underlying subsystems are from other containers or from the host machine.
+A container is defined by its image as well as any configuration options you provide to it when you create or start it. When a container is removed, any changes to its state that are not stored in persistent storage disappear.
+Example docker run command
+The following command runs an ubuntu container, attaches interactively to your local command-line session, and runs /bin/bash.
+
+$ docker run -i -t ubuntu /bin/bash
+When you run this command, the following happens (assuming you are using the default registry configuration):
+	1.	If you do not have the ubuntu image locally, Docker pulls it from your configured registry, as though you had run docker pull ubuntu manually. 
+	2.	Docker creates a new container, as though you had run a docker container create command manually. 
+	3.	Docker allocates a read-write filesystem to the container, as its final layer. This allows a running container to create or modify files and directories in its local filesystem. 
+	4.	Docker creates a network interface to connect the container to the default network, since you did not specify any networking options. This includes assigning an IP address to the container. By default, containers can connect to external networks using the host machine’s network connection. 
+	5.	Docker starts the container and executes /bin/bash. Because the container is running interactively and attached to your terminal (due to the -i and -t flags), you can provide input using your keyboard while the output is logged to your terminal. 
+	6.	When you type exit to terminate the /bin/bash command, the container stops but is not removed. You can start it again or remove it. 
+The underlying technology
+Docker is written in the Go programming language and takes advantage of several features of the Linux kernel to deliver its functionality. Docker uses a technology called namespaces to provide the isolated workspace called the container. When you run a container, Docker creates a set of namespaces for that container.
+These namespaces provide a layer of isolation. Each aspect of a container runs in a separate namespace and its access is limited to that namespace.
+“Namespaces are a feature of the Linux kernel that partitions kernel resources such that one set of processes sees one set of resources while another set of processes sees a different set of resources.”
+
+What Are Namespaces?
+
+Namespaces have been part of the Linux kernel since about 2002, and over time more tooling and namespace types have been added. Real container support was added to the Linux kernel only in 2013, however. This is what made namespaces really useful and brought them to the masses.
+But what are namespaces exactly? Here’s a wordy definition from Wikipedia:
+“Namespaces are a feature of the Linux kernel that partitions kernel resources such that one set of processes sees one set of resources while another set of processes sees a different set of resources.”
+In other words, the key feature of namespaces is that they isolate processes from each other. On a server where you are running many different services, isolating each service and its associated processes from other services means that there is a smaller blast radius for changes, as well as a smaller footprint for security‑related concerns. Mostly though, isolating services meets the architectural style of microservices as described by Martin Fowler.
+Using containers during the development process gives the developer an isolated environment that looks and feels like a complete VM. It’s not a VM, though – it’s a process running on a server somewhere. If the developer starts two containers, there are two processes running on a single server somewhere – but they are isolated from each other.
+Types of Namespaces
+Within the Linux kernel, there are different types of namespaces. Each namespace has its own unique properties:
+		A user namespace has its own set of user IDs and group IDs for assignment to processes. In particular, this means that a process can have root privilege within its user namespace without having it in other user namespaces.
+		A process ID (PID) namespace assigns a set of PIDs to processes that are independent from the set of PIDs in other namespaces. The first process created in a new namespace has PID 1 and child processes are assigned subsequent PIDs. If a child process is created with its own PID namespace, it has PID 1 in that namespace as well as its PID in the parent process’ namespace. See below for an example.
+		A network namespace has an independent network stack: its own private routing table, set of IP addresses, socket listing, connection tracking table, firewall, and other network‑related resources.
+		A mount namespace has an independent list of mount points seen by the processes in the namespace. This means that you can mount and unmount filesystems in a mount namespace without affecting the host filesystem.
+		An interprocess communication (IPC) namespace has its own IPC resources, for example POSIX message queues.
+		A UNIX Time‑Sharing (UTS) namespace allows a single system to appear to have different host and domain names to different processes.
+An Example of Parent and Child PID Namespaces
+In the diagram below, there are three PID namespaces – a parent namespace and two child namespaces. Within the parent namespace, there are four processes, named PID1 through PID4. These are normal processes which can all see each other and share resources.
+The child processes with PID2 and PID3 in the parent namespace also belong to their own PID namespaces in which their PID is 1. From within a child namespace, the PID1 process cannot see anything outside. For example, PID1 in both child namespaces cannot see PID4 in the parent namespace.
+This provides isolation between (in this case) processes within different namespaces.
+
+Creating a Namespace
+With all that theory under our belts, let’s cement our understanding by actually creating a new namespace. The Linux unshare command is a good place to start. The manual page indicates that it does exactly what we want:
+NAME
+          unshare - run program in new name namespaces
+I’m currently logged in as a regular user, svk, which has its own user ID, group, and so on, but not root privileges:
+svk $ id
+uid=1000(svk) gid=1000(svk) groups=1000(svk) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c.1023
+Now I run the following unshare command to create a new namespace with its own user and PID namespaces. I map the root user to the new namespace (in other words, I have root privilege within the new namespace), mount a new proc filesystem, and fork my process (in this case, bash) in the newly created namespace.
+svk $ unshare --user --pid --map-root-user --mount-proc --fork bash
+(For those of you familiar with containers, this accomplishes the same thing as issuing the <runtime> exec -it <image> /bin/bash command in a running container.)
+The ps -ef command shows there are two processes running – bash and the ps command itself – and the id command confirms that I’m root in the new namespace (which is also indicated by the changed command prompt):
+root # ps -ef
+UID         PID     PPID  C STIME TTY        TIME CMD
+root          1        0  0 14:46 pts/0  00:00:00 bash
+root         15        1  0 14:46 pts/0  00:00:00 ps -ef
+root # id
+uid=0(root) gid=0(root) groups=0(root) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c.1023
+The crucial thing to notice is that I can see only the two processes in my namespace, not any other processes running on the system. I am completely isolated within my own namespace.
+Looking at a Namespace from the Outside
+Though I can’t see other processes from within the namespace, with the lsns (list namespaces) command I can list all available namespaces and display information about them, from the perspective of the parent namespace (outside the new namespace).
+The output shows three namespaces – of types user, mnt, and pid – which correspond to the arguments on the unshare command I ran above. From this external perspective, each namespace is running as user svk, not root, whereas inside the namespace processes run as root, with access to all of the expected resources. (The output is broken across two lines for easier reading.)
+root # lsns --output-all | head -1; lsns --output-all | grep svk
+        NS TYPE   PATH                   NPROCS    PID   PPID ...
+4026532690 user   /proc/97964/ns/user         2  97964  97944 ...                
+4026532691 mnt    /proc/97964/ns/mnt          2  97964  97944 ...        
+4026532692 pid    /proc/97965/ns/pid          1  97965  97964 ...
+
+  ... COMMAND                                                       UID USER               
+  ... unshare --user --map-root-user --fork –pid --mount-proc bash  1000 svk               
+  ... unshare --user --map-root-user --fork –pid --mount-proc bash  1000 svk               
+  ... bash                                                          1000 svk
+Namespaces and Containers
+Namespaces are one of the technologies that containers are built on, used to enforce segregation of resources. We’ve shown how to create namespaces manually, but container runtimes like Docker, rkt, and podman make things easier by creating namespaces on your behalf. Similarly, the isolation application object in NGINX Unit creates namespaces and cgroups.
+What Are cgroups?
+
+A control group (cgroup) is a Linux kernel feature that limits, accounts for, and isolates the resource usage (CPU, memory, disk I/O, network, and so on) of a collection of processes.
+Cgroups provide the following features:
+		Resource limits – You can configure a cgroup to limit how much of a particular resource (memory or CPU, for example) a process can use.
+		Prioritization – You can control how much of a resource (CPU, disk, or network) a process can use compared to processes in another cgroup when there is resource contention.
+		Accounting – Resource limits are monitored and reported at the cgroup level.
+		Control – You can change the status (frozen, stopped, or restarted) of all processes in a cgroup with a single command.
+So basically you use cgroups to control how much of a given key resource (CPU, memory, network, and disk I/O) can be accessed or used by a process or set of processes. Cgroups are a key component of containers because there are often multiple processes running in a container that you need to control together. In a Kubernetes environment, cgroups can be used to implement resource requests and limits and corresponding QoS classes at the pod level.
+The following diagram illustrates how when you allocate a particular percentage of available system resources to a cgroup (in this case cgroup‑1), the remaining percentage is available to other cgroups (and individual processes) on the system.
+
+Cgroup Versions
+According to Wikipedia, the first version of cgroups was merged into the Linux kernel mainline in late 2007 or early 2008, and “the documentation of cgroups‑v2 first appeared in [the] Linux kernel … [in] 2016”. Among the many changes in version 2, the big ones are a much simplified tree architecture, new features and interfaces in the cgroup hierarchy, and better accommodation of “rootless” containers (with non‑zero UIDs).
+My favorite new interface in v2 is for pressure stall information (PSI). It provides insight into per‑process memory use and allocation in a much more granular way than was previously possible (this is beyond the scope of this blog, but is a very cool topic).
+Creating a cgroup
+The following command creates a v1 cgroup (you can tell by pathname format) called foo and sets the memory limit for it to 50,000,000 bytes (50 MB).
+root # mkdir -p /sys/fs/cgroup/memory/foo
+root # echo 50000000 > /sys/fs/cgroup/memory/foo/memory.limit_in_bytes
+Now I can assign a process to the cgroup, thus imposing the cgroup’s memory limit on it. I’ve written a shell script called test.sh, which prints cgroup testing tool to the screen, and then waits doing nothing. For my purposes, it is a process that continues to run until I stop it.
+I start test.sh in the background and its PID is reported as 2428. The script produces its output and then I assign the process to the cgroup by piping its PID into the cgroup file /sys/fs/cgroup/memory/foo/cgroup.procs.
+root # ./test.sh &
+[1] 2428
+root # cgroup testing tool
+root # echo 2428 > /sys/fs/cgroup/memory/foo/cgroup.procs
+To validate that my process is in fact subject to the memory limits that I defined for cgroup foo, I run the following ps command. The -o cgroup flag displays the cgroups to which the specified process (2428) belongs. The output confirms that its memory cgroup is foo.
+root # ps -o cgroup 2428
+CGROUP
+12:pids:/user.slice/user-0.slice/\
+session-13.scope,10:devices:/user.slice,6:memory:/foo,...
+By default, the operating system terminates a process when it exceeds a resource limit defined by its cgroup.
+Conclusion
+
+Namespaces and cgroups are the building blocks for containers and modern applications. Having an understanding of how they work is important as we refactor applications to more modern architectures.
+Namespaces provide isolation of system resources, and cgroups allow for fine‑grained control and enforcement of limits for those resources.
+Containers are not the only way that you can use namespaces and cgroups. Namespaces and cgroup interfaces are built into the Linux kernel, which means that other applications can use them to provide separation and resource constraints.
+
+Docker network
+Description
+Creates a new network. The DRIVER accepts bridge or overlay which are the built-in network drivers. If you have installed a third party or your own custom network driver you can specify that DRIVER here also. If you don’t specify the --driver option, the command automatically creates a bridge network for you. When you install Docker Engine it creates a bridge network automatically. This network corresponds to the docker0 bridge that Engine has traditionally relied on. When you launch a new container with docker run it automatically connects to this bridge network. You cannot remove this default bridge network, but you can create new ones using the network create command.
+
+Use bridge networks
+
+In terms of networking, a bridge network is a Link Layer device which forwards traffic between network segments. A bridge can be a hardware device or a software device running within a host machine’s kernel.
+In terms of Docker, a bridge network uses a software bridge which allows containers connected to the same bridge network to communicate, while providing isolation from containers which are not connected to that bridge network. The Docker bridge driver automatically installs rules in the host machine so that containers on different bridge networks cannot communicate directly with each other.
+Bridge networks apply to containers running on the same Docker daemon host. For communication among containers running on different Docker daemon hosts, you can either manage routing at the OS level, or you can use an overlay network.
+When you start Docker, a default bridge network (also called bridge) is created automatically, and newly-started containers connect to it unless otherwise specified. You can also create user-defined custom bridge networks. User-defined bridge networks are superior to the default bridge network.
+Differences between user-defined bridges and the default bridge
+	•	User-defined bridges provide automatic DNS resolution between containers. Containers on the default bridge network can only access each other by IP addresses, unless you use the --link option, which is considered legacy. On a user-defined bridge network, containers can resolve each other by name or alias. Imagine an application with a web front-end and a database back-end. If you call your containers web and db, the web container can connect to the db container at db, no matter which Docker host the application stack is running on. If you run the same application stack on the default bridge network, you need to manually create links between the containers (using the legacy --link flag). These links need to be created in both directions, so you can see this gets complex with more than two containers which need to communicate. Alternatively, you can manipulate the /etc/hosts files within the containers, but this creates problems that are difficult to debug. 
+	•	User-defined bridges provide better isolation. All containers without a --network specified, are attached to the default bridge network. This can be a risk, as unrelated stacks/services/containers are then able to communicate. Using a user-defined network provides a scoped network in which only containers attached to that network are able to communicate. 
+	•	Containers can be attached and detached from user-defined networks on the fly. During a container’s lifetime, you can connect or disconnect it from user-defined networks on the fly. To remove a container from the default bridge network, you need to stop the container and recreate it with different network options. 
+	•	Each user-defined network creates a configurable bridge. If your containers use the default bridge network, you can configure it, but all the containers use the same settings, such as MTU and iptables rules. In addition, configuring the default bridge network happens outside of Docker itself, and requires a restart of Docker. User-defined bridge networks are created and configured using docker network create. If different groups of applications have different network requirements, you can configure each user-defined bridge separately, as you create it. 
+	•	Linked containers on the default bridge network share environment variables. Originally, the only way to share environment variables between two containers was to link them using the --link flag. This type of variable sharing is not possible with user-defined networks. However, there are superior ways to share environment variables. A few ideas:
+	◦	Multiple containers can mount a file or directory containing the shared information, using a Docker volume. 
+	◦	Multiple containers can be started together using docker-compose and the compose file can define the shared variables. 
+	◦	You can use swarm services instead of standalone containers, and take advantage of shared secrets and configs. 
+Containers connected to the same user-defined bridge network effectively expose all ports to each other. For a port to be accessible to containers or non-Docker hosts on different networks, that port must be published using the -p or --publish flag.
+
+
+Nginx info
+
+One of the fundamental units of the internet is the web server. These web servers are computers built to deliver the requested webpage. Every web server has an IP address and a domain name. To make your computer a web server, you have to install web server software, such as NGINX, XAMPP, Apache, Tornado, Caddy, or Microsoft Internet Information Services (IIS). In this article, we’ll focus on NGINX.
+What Is NGINX?
+NGINX is open-source web server software used for reverse proxy, load balancing, and caching. It provides HTTPS server capabilities and is mainly designed for maximum performance and stability. It also functions as a proxy server for email communications protocols, such as IMAP, POP3, and SMTP. 
+The NGINX Architecture
+By implementing event-driven, asynchronous, and non-blocking models, NGINX uses master-slave architecture.
+It also uses an advanced event-based mechanism in many operating systems. Additionally, NGINX uses multiplexing and event notifications and dedicates specific tasks to separate processes. For example, if you have 10 tasks, 10 different processes will handle each of them. NGINX processes highly efficient run loops in a single-thread process called workers.
+	•	Workers accept new requests from a shared listen socket and execute highly efficient run loops inside each worker to process thousands of requests. 
+	•	Masters read and validate configurations by creating, binding, and crossing sockets. They also handle starting, terminations, and maintaining the number of configured worker processes. The master node can also reconfigure the worker process with no service interruption.
+	•	Proxy caches are special processes. They have a cache loader and manager. The cache loader checks the disk cache item and populates the engine’s in-memory database with the cache metadata. It prepares the NGINX instances to work with the files already stored on the disk in a specifically allocated structure. The cache manager handles cache expiration and invalidation.
+
+	•	What Is NGINX?
+	•	
+	•	NGINX is an open-source web server software that serves as a reverse proxy, HTTP load balancer, and email proxy for IMAP, 			POP3, and SMTP.
+	•	
+	•	How Does NGINX Work?
+	•	Before learning more about NGINX, let’s take a look at how a web server works. When someone makes a request to open a 				webpage, the browser contacts the web server of that website. Then, the web server looks for the requested files for the page and 			sends it to the browser. This is only the simplest kind of request.
+	•	The example above is also considered as a single thread. A traditional web server creates a single thread for every request, but 			NGINX does not work that way. As stated before, NGINX performs with an asynchronous, event-driven architecture. It means that 			similar threads are managed under one worker process, and each worker process contains smaller units called worker 					connections. This whole unit is then responsible for handling concurrent requests. Worker connections deliver the requests to a 			worker process, which will also send it to the master process. Finally, the master process provides the result of those requests.
+	•	That may sound simple, but one worker connection can take care of up to 1024 similar requests. Because of that, NGINX can 				process thousands of requests without any difficulties. It is also the reason why NGINX became the fastest web server that’s 				excellent for high traffic websites like e-commerce, search engines, and cloud storage.
+
+
+The Forward Proxy
+When people talk about a proxy server (often called a "proxy"), more often than not they are referring to a forward proxy. Let me explain what this particular server does.
+A forward proxy provides proxy services to a client or a group of clients. Often, these clients belong to a common internal network like the one shown below.
+
+When one of these clients makes a connection attempt to that file transfer server on the Internet, its requests have to pass through the forward proxy first.
+Depending on the forward proxy's settings, a request can be allowed or denied. If allowed, then the request is forwarded to the firewall and then to the file transfer server. From the point of view of the file transfer server, it is the proxy server that issued the request, not the client. So when the server responds, it addresses its response to the proxy.
+But then when the forward proxy receives the response, it recognizes it as a response to the request that went through earlier. And so it then sends that response to the client that made the request.
+Because proxy servers can keep track of requests, responses, their sources and their destinations, different clients can send out various requests to different servers through the forward proxy and the proxy will intermediate for all of them. Again, some requests will be allowed, while some will be denied.
+As you can see, the proxy can serve as a single point of access and control, making it easier for you to enforce authentication, SSL encryption or other security policies. A forward proxy is typically used in tandem with a firewall to enhance an internal network's security by controlling traffic originating from clients in the internal network that are directed at hosts on the Internet. Thus, from a security standpoint, a forward proxy is primarily aimed at enforcing security on client computers in your private network.
+But then client computers aren't always the only ones you find in your internal network. Sometimes, you also have servers. And when those servers have to provide services to external clients (for example, field staff who need to access files from your FTP server), a more appropriate solution would be a reverse proxy.
+
+
+The Reverse Proxy
+What is a reverse proxy? As its name implies, a reverse proxy does the exact opposite of what a forward proxy does. While a forward proxy proxies on behalf of clients (or requesting hosts), a reverse proxy proxies on behalf of servers. A reverse proxy accepts requests from external clients on behalf of servers stationed behind it as shown below.
+
+ In our example, it is the reverse proxy that is providing file transfer services. The client is oblivious to the file transfer servers behind the proxy, which are actually providing those services. In effect, where a forward proxy hides the identities of clients, a reverse proxy hides the identities of servers.
+An Internet-based attacker would find it considerably more difficult to acquire data found in those file transfer servers than if he didn't have to deal with a reverse proxy. This is why reverse proxy servers like JSCAPE MFT Gateway are very suitable for complying with data-impacting regulations like PCI-DSS.
+Just like forward proxy servers, reverse proxies also provide a single point of access and control. You typically set it up to work alongside one or two firewalls to control traffic and requests directed to your internal servers.
+In most cases, reverse proxy servers also act as load balancers for the servers behind them. Load balancers play a crucial role in providing high availability to network services that receive large volumes of requests. When a reverse proxy performs load balancing, it distributes incoming requests to a cluster of servers, all providing the same kind of service. So, for instance, a reverse proxy load balancing FTP services will have a cluster of FTP servers behind it, and will manage server load to prevent bottlenecks and delays.
+Both types of proxy servers relay requests and responses between clients and destination machines. But in the case of reverse proxy servers, client requests that go through them normally originate over TCP/IP connections, while, in the case of forward proxies, client requests normally come from the internal network behind them.
+
+
+
+What Is Load Balancing?
+Load balancing refers to efficiently distributing incoming network traffic across a group of backend servers, also known as a server farm or server pool.
+Modern high‑traffic websites must serve hundreds of thousands, if not millions, of concurrent requests from users or clients and return the correct text, images, video, or application data, all in a fast and reliable manner. To cost‑effectively scale to meet these high volumes, modern computing best practice generally requires adding more servers.
+A load balancer acts as the “traffic cop” sitting in front of your servers and routing client requests across all servers capable of fulfilling those requests in a manner that maximizes speed and capacity utilization and ensures that no one server is overworked, which could degrade performance. If a single server goes down, the load balancer redirects traffic to the remaining online servers. When a new server is added to the server group, the load balancer automatically starts to send requests to it.
+In this manner, a load balancer performs the following functions:
+		Distributes client requests or network load efficiently across multiple servers
+		Ensures high availability and reliability by sending requests only to servers that are online
+		Provides the flexibility to add or subtract servers as demand dictates
+
+
+Nginx directives :
+
+Autoindex : on
+
+￼
+
+As previously mentioned, if you don't have an index.html file in a particular directory that you want to generate a listing for, then navigating to that URL path will return a 404 Not Found error. However, the Nginx autoindex module provides an easy way for a particular directory to automatically generate a listing. Adding autoindex to your Nginx configuration is quite easy. Simply add it to your Nginx location directive as so:
+location /somedirectory/ {
+    autoindex on;
+}
+Once that change is made, restart your Ngin x server sudo service nginx restart. Now, instead of returning a 404 error, the web server will return an Nginx directory index listing similar to what is shown in the previous section for the directory/directories you have defined in your location block.
+
+try_file :
+try_files tries the literal path you specify in relation to the defined root directive and sets the internal file pointer.
+
+
+Why Use FastCGI Proxying?
+FastCGI proxying within Nginx is generally used to translate client requests for an application server that does not or should not handle client requests directly. FastCGI is a protocol based on the earlier CGI, or common gateway interface, protocol meant to improve performance by not running each request as a separate process. It is used to efficiently interface with a server that processes requests for dynamic content.
+One of the main use-cases of FastCGI proxying within Nginx is for PHP processing. Unlike Apache, which can handle PHP processing directly with the use of the mod_php module, Nginx must rely on a separate PHP processor to handle PHP requests. Most often, this processing is handled with php-fpm, a PHP processor that has been extensively tested to work with Nginx.
+Nginx with FastCGI can be used with applications using other languages so long as there is an accessible component configured to respond to FastCGI requests.
+FastCGI Proxying Basics
+fastcgi_param REQUEST_METHOD $request_method;
+
+fastcgi_param   $document_root$fastcgi_script_name;
+
+
+In the above configuration, we set two FastCGI parameters, called REQUEST_METHOD and SCRIPT_FILENAME. These are both required in order for the backend server to understand the nature of the request. The former tells it what type of operation it should be performing, while the latter tell the upstream which file to execute.
+
+
+ fastcgi_pass unix:/var/run/php5-fpm.sock;
+
+We made one other significant change in the configuration above in that we specified the FastCGI backend using a Unix socket instead of a network socket. Nginx can use either type of interface to connect to the FastCGI upstream. If the FastCGI processor lives on the same host, typically a Unix socket is recommended for security.
+
+Common FastCGI Directives
+The following represent some of the most useful directives for working with FastCGI passes:
+	•	fastcgi_pass: The actual directive that passes requests in the current context to the backend. This defines the location where the FastCGI processor can be reached.
+	•	fastcgi_param: The array directive that can be used to set parameters to values. Most often, this is used in conjunction with Nginx variables to set FastCGI parameters to values specific to the request.
+	•	try_files: Not a FastCGI-specific directive, but a common directive used within FastCGI pass locations. This is often used as part of a request sanitation routine to make sure that the requested file exists before passing it to the FastCGI processor.
+	•	include: Again, not a FastCGI-specific directive, but one that gets heavy usage in FastCGI pass contexts. Most often, this is used to include common, shared configuration details in multiple locations.
+	•	fastcgi_split_path_info: This directive defines a regular expression with two captured groups. The first captured group is used as the value for the $fastcgi_script_name variable. The second captured group is used as the value for the $fastcgi_path_info variable. Both of these are often used to correctly parse the request so that the processor knows which pieces of the request are the files to run and which portions are additional information to pass to the script.
+	•	fastcgi_index: This defines the index file that should be appended to $fastcgi_script_name values that end with a slash (/). This is often useful if the SCRIPT_FILENAME parameter is set to $document_root$fastcgi_script_name and the location block is configured to accept requests with info after the file.
+
+
+SSL :
+
+TLS, or transport layer security, and its predecessor SSL, which stands for secure sockets layer, are web protocols used to wrap normal traffic in a protected, encrypted wrapper.
+Using this technology, servers can send traffic safely between the server and clients without the possibility of the messages being intercepted by outside parties. The certificate system also assists users in verifying the identity of the sites that they are connecting with.
+TLS/SSL works by using a combination of a public certificate and a private key. The SSL key is kept secret on the server. It is used to encrypt content sent to clients. The SSL certificate is publicly shared with anyone requesting the content. It can be used to decrypt the content signed by the associated SSL key.
+
+Nginx -g daemon of 
+Be sure to include daemon off; in your custom configuration to ensure that Nginx stays in the foreground so that Docker can track the process properly (otherwise your container will stop immediately after starting)!
+
+
+—————————————————————————————————————————————————————————————————————
+
+
+
+PHP php-fpm
+
+PHP is a widely-used general-purpose scripting language that is especially suited for Web development and can be embedded into HTML. This is a variant of PHP that will run in the background as a daemon, listening for CGI requests. Output is logged to /var/log/php-fpm.log.
+Most options are set in the configuration file. The configuration file is /etc/php-fpm.conf. By default, php-fpm will respond to CGI requests listening on localhost http port 9000. Therefore php-fpm expects your webserver to forward all requests for '.php' files to port 9000 and you should edit your webserver configuration file appropriately.
+
+-F
+Force to stay in foreground and ignore daemonize option from configuration file.
+-R 
+Allow pool run as root (disabled by default) 
+
+Understanding PHP Pools
+As described in Understanding System Users all sites deployed via SpinupWP are owned by a unique system user. This provides security isolation on the server because a site user cannot read or modify another site’s files.
+Each site is also deployed with a PHP-FPM resource pool, which is owned by the site user. This prevents PHP scripts from reading or modifying files outside of the current site’s root directory. Meaning, if a malicious user were to gain access to a site on your server, they would be unable to infect other sites.
+In addition to providing security isolation between sites, PHP pools allow you to configure PHP on a per-site basis. Values within your php.ini file can be overridden in a pools config file.
+PHP built-in server :
+The web server runs only one single-threaded process, so PHP applications will stall if a request is blocked.
+URI requests are served from the current working directory where PHP was started, unless the -t option is used to specify an explicit document root. If a URI request does not specify a file, then either index.php or index.html in the given directory are returned. If neither file exists, the lookup for index.php and index.html will be continued in the parent directory and so on until one is found or the document root has been reached. If an index.php or index.html is found, it is returned and $_SERVER['PATH_INFO'] is set to the trailing part of the URI. Otherwise a 404 response code is returned.
+If a PHP file is given on the command line when the web server is started it is treated as a "router" script. The script is run at the start of each HTTP request. If this script returns false, then the requested resource is returned as-is. Otherwise the script's output is returned to the browser.
+Listen on all addresses of IPv4:
+php -S 0.0.0.0:80
+
+Listen on all addresses of IPv6:
+php -S [::0]:80
+
+
+php  -S <addr>:<port> Run with built-in web server.
+Php  -t <docroot>     Specify document root <docroot> for built-in web server.
+
+
+OPENRC
+OpenRC will start necessary system services in the correct order at boot, manage them while the system is in use, and stop them at shutdown. 
+
+
+REDIS 
+
+
+What is Redis Used For?
+Redis is used for speeding up website page load time for users. When it comes to WordPress websites, it is mainly used as a caching system to temporarily store information that would usually sit in a database. This way, it can be loaded much faster rather than having to access the database directly.
+While Redis cache is primarily used as a caching system to speed up WordPress websites, Redis itself is much more powerful than that. It can also be used as a database and a message broker, but in this article, we will focus on Redis and how it is used as a caching mechanism.
+Redis cache shines when used with WordPress websites as an object caching tool. Since WordPress is such a powerful and flexible Content Management System, it has lots of data objects that need to be accessed regularly.
+
+
+
+What is Object Caching?
+An object in programming terminology is an abstract data structure that the programmer defines.
+For example, in WordPress, there are many objects such as Posts, Pages, or users. When using WooCommerce, the ecommerce solution for WordPress, you have even more objects such as Products or Orders. These objects are stored in the database and accessed multiple times while you use your WordPress website.
+Object caching allows you to keep the objects in temporary memory so that you do not need to go back to the database to access the data.
+How Does Redis Cache Work With Object Caching?
+Since WordPress works with many types of objects, each time those objects need to be accessed, your website has to access the database to retrieve the information. Redis makes this faster by temporarily storing the retrieved data. Then, next time your website needs this information, your website can access it from the temporary storage instead of having to access it from the database.
+This will significantly speed up your WordPress website since accessing your website database using SQL queries is a lot slower than accessing the needed information via the Redis object caching system.
+
+
+NPM http-server
+http-server is a simple, zero-configuration command-line static HTTP server. It is powerful enough for production usage, but it's simple and hackable enough to be used for testing, local development and learning.
+
+
+always: Always restart the container if it stops, or is manually stopped due to the daemon stopping.
+unless-stopped: Always restart the container, unless the daemon is stopped, at which point, the container must be restarted manually.
+
+Dockerfile vs docker-compose: What's the difference?
+
+A Dockerfile is a simple text file that contains the commands a user could call to assemble an image whereas Docker Compose is a tool for defining and running multi-container Docker applications.
+Docker Compose define the services that make up your app in docker-compose.yml so they can be run together in an isolated environment. It gets an app running in one command by just running docker-compose up. Docker compose uses the Dockerfile if you add the build command to your project’s docker-compose.yml. Your Docker workflow should be to build a suitable Dockerfile for each image you wish to create, then use compose to assemble the images using the build command.
+
+
+A Dockerfile is a simple text file that contains the commands a user could call to assemble an image.
+
+Docker Compose
+	•	is a tool for defining and running multi-container Docker applications. 
+	•	define the services that make up your app in docker-compose.yml so they can be run together in an isolated environment. 
+	•	get an app running in one command by just running docker-compose up 
+
+https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/Dockerfile-vs-docker-compose-Whats-the-difference#:~:text=The%20key%20difference%20between%20the,used%20to%20run%20Docker%20containers.
+
+
+One of the main reasons companies use Docker is as an alternative to virtual machines. Docker is used as an alternative because they are more lightweight in terms of resources than virtual machines. Containers share operating systems whereas virtual machines are designed to emulate virtual hardware. By sharing operating systems, Docker applications can run while consuming a fraction of the resources of a virtual machine.
+
+
+    Operating System Support
+https://geekflare.com/docker-vs-virtual-machine/
+The operating system support of Virtual machine and Docker container is very different. From the image above, you can see each virtual machine has its guest operating system above the host operating system, which makes virtual machines heavy. While on the other hand, Docker containers share the host operating system, and that is why they are lightweight.
+Advantages of Docker Containers
+		Docker containers are process-isolated and don’t require a hardware hypervisor. This means Docker containers are much smaller and require far fewer resources than a VM.
+		Docker is fast. Very fast. While a VM can take an at least a few minutes to boot and be dev-ready, it takes anywhere from a few milliseconds to (at most) a few seconds to start a Docker container from a container image.
+		Containers can be shared across multiple team members, bringing much-needed portability across the development pipeline. This reduces ‘works on my machine’ errors that plague DevOps teams.
+
+How does an SSL/TLS certificate work?
+Browsers use the SSL/TLS certificate to start a secure connection with the web server through the SSL/TLS handshake. The SSL/TLS handshake is a part of the hypertext transfer protocol secure (HTTPS) communication technology. It is a combination of HTTP and SSL/TLS. HTTP is a protocol that web browsers use to send information in plain text to a web server. HTTP transmits unencrypted data, which means that information sent from a browser can be intercepted and read by third parties. Browsers use HTTP with SSL/TLS, or HTTPS  for fully secure communication.
+SSL/TLS handshake
+The SSL/TLS handshake involves the following steps:
+ 
+	1.	The browser opens an SSL/TLS-secure website and connects to the web server.
+	2.	The browser attempts to verify the authenticity of the web server by requesting identifiable information. 
+	3.	The web server sends the SSL/TLS certificate that contains a public key as a reply.
+	4.	The browser verifies the SSL/TLS certificate, ensuring that it is valid and matches the website domain. Once the browser is satisfied with the SSL/TLS certificate, it uses the public key to encrypt and send a message that contains a secret session key.
+	5.	The web server uses its private key to decrypt the message and retrieve the session key. It then uses the session key to encrypt and send an acknowledgment message to the browser.
+	6.	Now, both browser and web server switch to using the same session key to exchange messages safely. 
+Session key 
+A session key maintains encrypted communication between the browser and web server after the initial SSL/TLS authentication is completed. The session key is a cipher key for symmetric cryptography. Symmetric cryptography uses the same key for both encryption and decryption. Asymmetric cryptography takes up immense computing power. Therefore, the web server switches to symmetric cryptography that requires less calculation to maintain an SSL/TLS connection.
+
+
+
